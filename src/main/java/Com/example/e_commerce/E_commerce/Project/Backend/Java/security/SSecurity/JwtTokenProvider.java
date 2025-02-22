@@ -7,9 +7,11 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
-import java.util.Base64;
+import javax.crypto.SecretKey;
+import jakarta.annotation.PostConstruct;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
+
 @Component
 public class JwtTokenProvider {
     @Value("${jwt.secret}")
@@ -18,27 +20,31 @@ public class JwtTokenProvider {
     @Value("${jwt.expiration}")
     private long jwtExpiration;
 
+    private SecretKey key;
+
+    @PostConstruct
+    public void init() {
+        // Create a secure key from the secret
+        byte[] keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
+        this.key = Keys.hmacShaKeyFor(keyBytes);
+    }
+
     public String generateToken(Customer customer) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpiration);
-
-        // Convert secret to Base64 encoded string
-        String base64EncodedSecret = Base64.getEncoder().encodeToString(jwtSecret.getBytes());
 
         return Jwts.builder()
             .setSubject(customer.getUsername())
             .claim("roles", customer.getRole().name())
             .setIssuedAt(now)
             .setExpiration(expiryDate)
-            .signWith(Keys.hmacShaKeyFor(base64EncodedSecret.getBytes()))
+            .signWith(key, SignatureAlgorithm.HS512)
             .compact();
     }
 
     public String getUsernameFromToken(String token) {
-        String base64EncodedSecret = Base64.getEncoder().encodeToString(jwtSecret.getBytes());
-
         Claims claims = Jwts.parserBuilder()
-            .setSigningKey(Keys.hmacShaKeyFor(base64EncodedSecret.getBytes()))
+            .setSigningKey(key)
             .build()
             .parseClaimsJws(token)
             .getBody();
@@ -48,9 +54,8 @@ public class JwtTokenProvider {
 
     public boolean validateToken(String token) {
         try {
-            String base64EncodedSecret = Base64.getEncoder().encodeToString(jwtSecret.getBytes());
             Jwts.parserBuilder()
-                .setSigningKey(Keys.hmacShaKeyFor(base64EncodedSecret.getBytes()))
+                .setSigningKey(key)
                 .build()
                 .parseClaimsJws(token);
             return true;
