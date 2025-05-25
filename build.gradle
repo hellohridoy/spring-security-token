@@ -1,59 +1,75 @@
 plugins {
-	id 'java'
-	id 'org.springframework.boot' version '3.4.2'
-	id 'io.spring.dependency-management' version '1.1.7'
+    id 'java'
+    id 'org.springframework.boot' version '3.4.2'
+    id 'io.spring.dependency-management' version '1.1.7'
 }
 
 group = 'Com.example.e-commerce'
 version = '0.0.1-SNAPSHOT'
 
 java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
-	}
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
 }
 
 configurations {
-	compileOnly {
-		extendsFrom annotationProcessor
-	}
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
 }
 
 repositories {
-	mavenCentral()
+    mavenCentral()
 }
 
 ext {
-	set('springAiVersion', "1.0.0-M5")
+    set('springAiVersion', "1.0.0-M5")
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	implementation 'org.springframework.boot:spring-boot-starter-mail'
-	implementation 'org.springframework.boot:spring-boot-starter-security'
-	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
-	implementation 'org.springframework.boot:spring-boot-starter-validation'
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'org.springframework.ai:spring-ai-redis-store-spring-boot-starter'
-	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
-    implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
-    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
-    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
-    implementation 'org.springframework.boot:spring-boot-starter-security'
-	compileOnly 'org.projectlombok:lombok'
-	runtimeOnly 'org.postgresql:postgresql'
-	annotationProcessor 'org.projectlombok:lombok'
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testImplementation 'org.springframework.security:spring-security-test'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    // --- Spring Boot Starters ---
+    implementation 'org.springframework.boot:spring-boot-starter-web'            // Web applications
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'       // JPA and Hibernate
+    implementation 'org.springframework.boot:spring-boot-starter-security'       // Spring Security
+    implementation 'org.springframework.boot:spring-boot-starter-mail'           // Email support
+    implementation 'org.springframework.boot:spring-boot-starter-validation'     // Validation (JSR 380)
+
+//    // --- Thymeleaf ---
+//    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'      // Template engine
+//    implementation 'org.thymeleaf.extras:thymeleaf-extras-spring security6'       // Thymeleaf security integration
+
+    // --- ModelMapper ---
+    implementation 'org.modelmapper.extensions:modelmapper-spring:2.4.4'          // Mapping DTOs to entities
+
+    // --- JWT for Security ---
+    implementation 'io.jsonwebtoken:jjwt-api:0.11.5'                              // JWT API
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'                                // JWT implementation
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'                             // JWT JSON processing
+
+    // --- AI Support ---
+    implementation 'org.springframework.ai:spring-ai-redis-store-spring-boot-starter' // Spring AI Redis store
+
+    // --- Lombok ---
+    compileOnly 'org.projectlombok:lombok'                                        // Lombok for reducing boilerplate
+    annotationProcessor 'org.projectlombok:lombok'
+
+    // --- Databases ---
+    runtimeOnly 'com.mysql:mysql-connector-j'                                     // MySQL JDBC driver
+    runtimeOnly 'org.postgresql:postgresql'                                       // PostgreSQL JDBC driver
+
+    // --- Testing ---
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'        // Spring Boot test utilities
+    testImplementation 'org.springframework.security:spring-security-test'        // Spring Security test support
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'                  // JUnit platform
 }
 
 dependencyManagement {
-	imports {
-		mavenBom "org.springframework.ai:spring-ai-bom:${springAiVersion}"
-	}
+    imports {
+        mavenBom "org.springframework.ai:spring-ai-bom:${springAiVersion}"
+    }
 }
 
 tasks.named('test') {
-	useJUnitPlatform()
+    useJUnitPlatform()
 }
