@@ -5,9 +5,7 @@ import Com.example.e_commerce.E_commerce.Project.Backend.Java.exceptions.Resourc
 import Com.example.e_commerce.E_commerce.Project.Backend.Java.model.Image;
 import Com.example.e_commerce.E_commerce.Project.Backend.Java.response.ApiResponse;
 import Com.example.e_commerce.E_commerce.Project.Backend.Java.service.image.IImageService;
-import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -22,6 +20,7 @@ import java.util.List;
 
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
+
 @RequiredArgsConstructor
 @RestController
 public class ImageController {
@@ -43,7 +42,7 @@ public class ImageController {
     @GetMapping("/image/download-by-blob/{id}")
     public ResponseEntity<byte[]> downloadImageByBlob(@PathVariable Long id) {
         Image image = imageService.getImageById(id); // or imageRepository.findById(id) if you inject it here
-        if(image == null) {
+        if (image == null) {
             throw new ResourceNotFoundException("Image not found with id " + id);
         }
 
@@ -65,12 +64,12 @@ public class ImageController {
     public ResponseEntity<ApiResponse> updateImage(@PathVariable Long imageId, @RequestBody MultipartFile file) {
         try {
             Image image = imageService.getImageById(imageId);
-            if(image != null) {
+            if (image != null) {
                 imageService.updateImage(file, imageId);
                 return ResponseEntity.ok(new ApiResponse("Update success!", null));
             }
         } catch (ResourceNotFoundException e) {
-            return  ResponseEntity.status(NOT_FOUND).body(new ApiResponse(e.getMessage(), null));
+            return ResponseEntity.status(NOT_FOUND).body(new ApiResponse(e.getMessage(), null));
         }
         return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(new ApiResponse("Update failed!", INTERNAL_SERVER_ERROR));
     }
@@ -80,12 +79,12 @@ public class ImageController {
     public ResponseEntity<ApiResponse> deleteImage(@PathVariable Long imageId) {
         try {
             Image image = imageService.getImageById(imageId);
-            if(image != null) {
-                imageService.deleteImageById( imageId);
+            if (image != null) {
+                imageService.deleteImageById(imageId);
                 return ResponseEntity.ok(new ApiResponse("Delete success!", null));
             }
         } catch (ResourceNotFoundException e) {
-            return  ResponseEntity.status(NOT_FOUND).body(new ApiResponse(e.getMessage(), null));
+            return ResponseEntity.status(NOT_FOUND).body(new ApiResponse(e.getMessage(), null));
         }
         return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(new ApiResponse("Delete failed!", INTERNAL_SERVER_ERROR));
     }

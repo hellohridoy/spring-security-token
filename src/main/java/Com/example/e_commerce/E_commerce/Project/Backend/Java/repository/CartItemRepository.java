@@ -14,8 +14,6 @@ import java.util.Optional;
 public interface CartItemRepository extends JpaRepository<CartItem, Long> {
     void deleteAllByCartId(Long id);
 
-    // Main query methods needed for the service
-
     // Method 1: Find cart item by cart ID and product ID (returns Optional)
     @Query("SELECT ci FROM CartItem ci WHERE ci.cart.id = :cartId AND ci.product.id = :productId")
     Optional<CartItem> findByCart_IdAndProduct_Id(@Param("cartId") Long cartId, @Param("productId") Long productId);

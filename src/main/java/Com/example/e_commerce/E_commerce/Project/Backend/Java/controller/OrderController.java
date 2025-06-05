@@ -18,7 +18,7 @@ import java.util.List;
 public class OrderController {
     private final IOrderService orderService;
 
-    @PostMapping("/order")
+    @PostMapping("/api/v1/orders/orders-infos")
     public ResponseEntity<ApiResponse> createOrder(@RequestParam Long userId) {
         try {
             Order order =  orderService.placeOrder(userId);
@@ -28,7 +28,7 @@ public class OrderController {
         }
     }
 
-    @GetMapping("/{orderId}/order")
+    @GetMapping("/api/v1/orders/orders-infos/{orderId}/order")
     public ResponseEntity<ApiResponse> getOrderById(@PathVariable Long orderId) {
         try {
             OrderDto order = orderService.getOrder(orderId);
@@ -38,7 +38,7 @@ public class OrderController {
         }
     }
 
-    @GetMapping("/{userId}/order")
+    @GetMapping("/api/v1/orders/orders-infos/{userId}/order")
     public ResponseEntity<ApiResponse> getUserOrders(@PathVariable Long userId) {
         try {
             List<OrderDto> order = orderService.getUserOrders(userId);

@@ -35,22 +35,22 @@ public class ProductService implements IProductService {
         // The set as the new product category.
 
         Category category = Optional.ofNullable(categoryRepository.findByName(request.getCategory().getName()))
-                .orElseGet(() -> {
-                    Category newCategory = new Category(request.getCategory().getName());
-                    return categoryRepository.save(newCategory);
-                });
+            .orElseGet(() -> {
+                Category newCategory = new Category(request.getCategory().getName());
+                return categoryRepository.save(newCategory);
+            });
         request.setCategory(category);
         return productRepository.save(createProduct(request, category));
     }
 
     private Product createProduct(AddProductRequest request, Category category) {
         return new Product(
-                request.getName(),
-                request.getBrand(),
-                request.getPrice(),
-                request.getInventory(),
-                request.getDescription(),
-                category
+            request.getName(),
+            request.getBrand(),
+            request.getPrice(),
+            request.getInventory(),
+            request.getDescription(),
+            category
         );
     }
 
@@ -58,22 +58,24 @@ public class ProductService implements IProductService {
     @Override
     public Product getProductById(Long id) {
         return productRepository.findById(id)
-                .orElseThrow(()-> new ResourceNotFoundException("Product not found!"));
+            .orElseThrow(() -> new ResourceNotFoundException("Product not found!"));
     }
 
     @Override
     public void deleteProductById(Long id) {
         productRepository.findById(id)
-                .ifPresentOrElse(productRepository::delete,
-                        () -> {throw new ResourceNotFoundException("Product not found!");});
+            .ifPresentOrElse(productRepository::delete,
+                () -> {
+                    throw new ResourceNotFoundException("Product not found!");
+                });
     }
 
     @Override
     public Product updateProduct(ProductUpdateRequest request, Long productId) {
         return productRepository.findById(productId)
-                .map(existingProduct -> updateExistingProduct(existingProduct,request))
-                .map(productRepository :: save)
-                .orElseThrow(()-> new ResourceNotFoundException("Product not found!"));
+            .map(existingProduct -> updateExistingProduct(existingProduct, request))
+            .map(productRepository::save)
+            .orElseThrow(() -> new ResourceNotFoundException("Product not found!"));
     }
 
     private Product updateExistingProduct(Product existingProduct, ProductUpdateRequest request) {
@@ -85,7 +87,7 @@ public class ProductService implements IProductService {
 
         Category category = categoryRepository.findByName(request.getCategory().getName());
         existingProduct.setCategory(category);
-        return  existingProduct;
+        return existingProduct;
 
     }
 
@@ -126,7 +128,7 @@ public class ProductService implements IProductService {
 
     @Override
     public List<ProductDto> getConvertedProducts(List<Product> products) {
-      return products.stream().map(this::convertToDto).toList();
+        return products.stream().map(this::convertToDto).toList();
     }
 
     @Override
@@ -134,8 +136,8 @@ public class ProductService implements IProductService {
         ProductDto productDto = modelMapper.map(product, ProductDto.class);
         List<Image> images = imageRepository.findByProductId(product.getId());
         List<ImageDto> imageDtos = images.stream()
-                .map(image -> modelMapper.map(image, ImageDto.class))
-                .toList();
+            .map(image -> modelMapper.map(image, ImageDto.class))
+            .toList();
         productDto.setImages(imageDtos);
         return productDto;
     }

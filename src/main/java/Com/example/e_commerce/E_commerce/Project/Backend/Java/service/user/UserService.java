@@ -21,6 +21,19 @@ public class UserService implements IUserService {
     private final ModelMapper modelMapper;
 
     @Override
+    public User login(String email, String password) {
+        User user = userRepository.findByEmail(email)
+            .orElseThrow(() -> new ResourceNotFoundException("Invalid email or password"));
+
+        if (!user.getPassword().equals(password)) {
+            throw new ResourceNotFoundException("Invalid email or password");
+        }
+
+        return user;
+    }
+
+
+    @Override
     public User getUserById(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found!"));

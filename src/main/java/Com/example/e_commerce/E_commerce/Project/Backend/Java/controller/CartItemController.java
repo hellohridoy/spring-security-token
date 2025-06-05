@@ -18,7 +18,7 @@ public class CartItemController {
     private final ICartService cartService;
 
 
-    @PostMapping("/item/add")
+    @PostMapping("/api/v1/items/items-infos/item/add")
     public ResponseEntity<ApiResponse> addItemToCart(@RequestParam(required = false) Long cartId,
                                                      @RequestParam Long productId,
                                                      @RequestParam Integer quantity) {
@@ -33,7 +33,7 @@ public class CartItemController {
         }
     }
 
-    @DeleteMapping("/cart/{cartId}/item/{itemId}/remove")
+    @DeleteMapping("/api/v1/items/items-infos/item/{itemId}/remove")
     public ResponseEntity<ApiResponse> removeItemFromCart(@PathVariable Long cartId, @PathVariable Long itemId) {
         try {
             cartItemService.removeItemFromCart(cartId, itemId);
@@ -43,7 +43,7 @@ public class CartItemController {
         }
     }
 
-    @PutMapping("/cart/{cartId}/item/{itemId}/update")
+    @PutMapping("/api/v1/items/items-infos/cart/{cartId}/item/{itemId}/update")
     public  ResponseEntity<ApiResponse> updateItemQuantity(@PathVariable Long cartId,
                                                            @PathVariable Long itemId,
                                                            @RequestParam Integer quantity) {

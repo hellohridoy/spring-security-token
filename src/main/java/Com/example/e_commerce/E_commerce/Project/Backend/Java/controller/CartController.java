@@ -16,7 +16,7 @@ import static org.springframework.http.HttpStatus.NOT_FOUND;
 public class CartController {
     private final ICartService cartService;
 
-    @GetMapping("/{cartId}/my-cart")
+    @GetMapping("/api/v1/carts/cart/{cartId}/my-cart")
     public ResponseEntity<ApiResponse> getCart( @PathVariable Long cartId) {
         try {
             Cart cart = cartService.getCart(cartId);
@@ -26,7 +26,7 @@ public class CartController {
         }
     }
 
-    @DeleteMapping("/{cartId}/clear")
+    @DeleteMapping("/api/v1/carts/cart/{cartId}/clear")
     public ResponseEntity<ApiResponse> clearCart( @PathVariable Long cartId) {
         try {
             cartService.clearCart(cartId);
@@ -36,7 +36,7 @@ public class CartController {
         }
     }
 
-    @GetMapping("/{cartId}/cart/total-price")
+    @GetMapping("/api/v1/carts/cart/{cartId}/total-price")
     public ResponseEntity<ApiResponse> getTotalAmount( @PathVariable Long cartId) {
         try {
             BigDecimal totalPrice = cartService.getTotalPrice(cartId);
