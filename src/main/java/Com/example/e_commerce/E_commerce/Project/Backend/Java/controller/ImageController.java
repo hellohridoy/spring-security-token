@@ -1,6 +1,5 @@
 package Com.example.e_commerce.E_commerce.Project.Backend.Java.controller;
 
-
 import Com.example.e_commerce.E_commerce.Project.Backend.Java.dto.ImageDto;
 import Com.example.e_commerce.E_commerce.Project.Backend.Java.exceptions.ResourceNotFoundException;
 import Com.example.e_commerce.E_commerce.Project.Backend.Java.model.Image;
@@ -10,11 +9,14 @@ import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.sql.Blob;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -22,7 +24,6 @@ import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("${api.prefix}/images")
 public class ImageController {
     private final IImageService imageService;
 
@@ -38,14 +39,27 @@ public class ImageController {
 
     }
 
-    @GetMapping("/image/download/{imageId}")
-    public ResponseEntity<Resource> downloadImage(@PathVariable Long imageId) throws SQLException {
-        Image image = imageService.getImageById(imageId);
-        ByteArrayResource resource = new ByteArrayResource(image.getImage().getBytes(1, (int) image.getImage().length()));
-        return  ResponseEntity.ok().contentType(MediaType.parseMediaType(image.getFileType()))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" +image.getFileName() + "\"")
-                .body((Resource) resource);
+    @Transactional
+    @GetMapping("/image/download-by-blob/{id}")
+    public ResponseEntity<byte[]> downloadImageByBlob(@PathVariable Long id) {
+        Image image = imageService.getImageById(id); // or imageRepository.findById(id) if you inject it here
+        if(image == null) {
+            throw new ResourceNotFoundException("Image not found with id " + id);
+        }
+
+        try {
+            Blob blob = image.getImage(); // assuming image.getImage() returns Blob
+            byte[] imageBytes = blob.getBytes(1, (int) blob.length());
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.parseMediaType(image.getFileType())); // Use actual file type here
+            headers.setContentDispositionFormData("attachment", image.getFileName());
+            return new ResponseEntity<>(imageBytes, headers, HttpStatus.OK);
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to read image data", e);
+        }
     }
+
 
     @PutMapping("/image/{imageId}/update")
     public ResponseEntity<ApiResponse> updateImage(@PathVariable Long imageId, @RequestBody MultipartFile file) {

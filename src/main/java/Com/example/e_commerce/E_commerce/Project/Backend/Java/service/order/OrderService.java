@@ -24,20 +24,20 @@ import java.util.List;
 public class OrderService implements IOrderService {
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
-    private final CartService cartService;
+    private final CartService cartServices;
     private final ModelMapper modelMapper;
 
 
     @Transactional
     @Override
     public Order placeOrder(Long userId) {
-        Cart cart   = cartService.getCartByUserId(userId);
+        Cart cart   = cartServices.getCartByUserId(userId);
         Order order = createOrder(cart);
         List<OrderItem> orderItemList = createOrderItems(order, cart);
         order.setOrderItems(new HashSet<>(orderItemList));
         order.setTotalAmount(calculateTotalAmount(orderItemList));
         Order savedOrder = orderRepository.save(order);
-        cartService.clearCart(cart.getId());
+        cartServices.clearCart(cart.getId());
         return savedOrder;
     }
 

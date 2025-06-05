@@ -1,6 +1,5 @@
 package Com.example.e_commerce.E_commerce.Project.Backend.Java.service.cart;
 
-
 import Com.example.e_commerce.E_commerce.Project.Backend.Java.exceptions.ResourceNotFoundException;
 import Com.example.e_commerce.E_commerce.Project.Backend.Java.model.Cart;
 import Com.example.e_commerce.E_commerce.Project.Backend.Java.model.CartItem;
@@ -9,80 +8,97 @@ import Com.example.e_commerce.E_commerce.Project.Backend.Java.repository.CartIte
 import Com.example.e_commerce.E_commerce.Project.Backend.Java.repository.CartRepository;
 import Com.example.e_commerce.E_commerce.Project.Backend.Java.service.product.IProductService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
+import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
+import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
-public class CartItemService  implements ICartItemService{
+public class CartItemService implements ICartItemService {
+
     private final CartItemRepository cartItemRepository;
     private final CartRepository cartRepository;
     private final IProductService productService;
-    private final ICartService cartService;
 
     @Override
+    @Transactional
     public void addItemToCart(Long cartId, Long productId, int quantity) {
-        //1. Get the cart
-        //2. Get the product
-        //3. Check if the product already in the cart
-        //4. If Yes, then increase the quantity with the requested quantity
-        //5. If No, then initiate a new CartItem entry.
-        Cart cart = cartService.getCart(cartId);
+        log.debug("Adding item to cart. CartId: {}, ProductId: {}, Quantity: {}", cartId, productId, quantity);
+
+        // Fetch fresh entities within transaction
+        Cart cart = cartRepository.findById(cartId)
+            .orElseThrow(() -> new ResourceNotFoundException("Cart not found with id: " + cartId));
+
         Product product = productService.getProductById(productId);
-        CartItem cartItem = cart.getItems()
-                .stream()
-                .filter(item -> item.getProduct().getId().equals(productId))
-                .findFirst().orElse(new CartItem());
-        if (cartItem.getId() == null) {
-            cartItem.setCart(cart);
-            cartItem.setProduct(product);
-            cartItem.setQuantity(quantity);
-            cartItem.setUnitPrice(product.getPrice());
+
+        // Check if item already exists
+        Optional<CartItem> existingItemOpt = cartItemRepository.findByCart_IdAndProduct_Id(cartId, productId);
+
+        if (existingItemOpt.isPresent()) {
+            // Update existing item
+            CartItem existingItem = existingItemOpt.get();
+            existingItem.setQuantity(existingItem.getQuantity() + quantity);
+            existingItem.setTotalPrice();
+            cartItemRepository.save(existingItem);
+            log.debug("Updated existing cart item with ID: {}", existingItem.getId());
+        } else {
+            // Create new item using constructor
+            CartItem newItem = new CartItem(cart, product, quantity, product.getPrice());
+            cartItemRepository.save(newItem);
+            log.debug("Created new cart item with ID: {}", newItem.getId());
         }
-        else {
-            cartItem.setQuantity(cartItem.getQuantity() + quantity);
+
+        // Recalculate cart total
+        updateCartTotal(cartId);
+    }
+
+    @Override
+    @Transactional
+    public void removeItemFromCart(Long cartId, Long itemId) {
+        CartItem itemToRemove = cartItemRepository.findById(itemId)
+            .orElseThrow(() -> new ResourceNotFoundException("Cart item not found with id: " + itemId));
+
+        if (!itemToRemove.getCart().getId().equals(cartId)) {
+            throw new ResourceNotFoundException("Cart item does not belong to this cart");
         }
+
+        cartItemRepository.delete(itemToRemove);
+        updateCartTotal(cartId);
+    }
+
+    @Override
+    @Transactional
+    public void updateItemQuantity(Long cartId, Long itemId, int quantity) {
+        CartItem cartItem = cartItemRepository.findById(itemId)
+            .orElseThrow(() -> new ResourceNotFoundException("Cart item not found with id: " + itemId));
+
+        if (!cartItem.getCart().getId().equals(cartId)) {
+            throw new ResourceNotFoundException("Cart item does not belong to this cart");
+        }
+
+        cartItem.setQuantity(quantity);
+        cartItem.setUnitPrice(cartItem.getProduct().getPrice());
         cartItem.setTotalPrice();
-        cart.addItem(cartItem);
         cartItemRepository.save(cartItem);
-        cartRepository.save(cart);
+
+        updateCartTotal(cartId);
     }
 
     @Override
-    public void removeItemFromCart(Long cartId, Long productId) {
-        Cart cart = cartService.getCart(cartId);
-        CartItem itemToRemove = getCartItem(cartId, productId);
-        cart.removeItem(itemToRemove);
-        cartRepository.save(cart);
+    @Transactional(readOnly = true)
+    public CartItem getCartItem(Long cartId, Long productId) {
+        return cartItemRepository.findByCart_IdAndProduct_Id(cartId, productId)
+            .orElseThrow(() -> new ResourceNotFoundException("Cart item not found"));
     }
 
-    @Override
-    public void updateItemQuantity(Long cartId, Long productId, int quantity) {
-        Cart cart = cartService.getCart(cartId);
-        cart.getItems()
-                .stream()
-                .filter(item -> item.getProduct().getId().equals(productId))
-                .findFirst()
-                .ifPresent(item -> {
-                    item.setQuantity(quantity);
-                    item.setUnitPrice(item.getProduct().getPrice());
-                    item.setTotalPrice();
-                });
-        BigDecimal totalAmount = cart.getItems()
-                .stream().map(CartItem ::getTotalPrice)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
+    private void updateCartTotal(Long cartId) {
+        BigDecimal totalAmount = cartItemRepository.getCartTotalAmount(cartId);
+        Cart cart = cartRepository.findById(cartId)
+            .orElseThrow(() -> new ResourceNotFoundException("Cart not found"));
         cart.setTotalAmount(totalAmount);
         cartRepository.save(cart);
-    }
-
-    @Override
-    public CartItem getCartItem(Long cartId, Long productId) {
-        Cart cart = cartService.getCart(cartId);
-        return  cart.getItems()
-                .stream()
-                .filter(item -> item.getProduct().getId().equals(productId))
-                .findFirst().orElseThrow(() -> new ResourceNotFoundException("Item not found"));
     }
 }
